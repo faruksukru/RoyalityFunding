@@ -9,7 +9,10 @@
  * @version 1.0
  */
 public with sharing class MCAFunding_FundedAmountController {
-    private static final String AMOUNT_SEPARATOR = ': 
+    private static final String AMOUNT_SEPARATOR = ': $';
+    private static final String LINE_SEPARATOR = '\n';
+    private static final String LINE_SPLIT_PATTERN = '\\r?\\n';
+    private static final String THOUSANDS_SEPARATOR = ',';
     private static final Integer AMOUNT_SCALE = 2;
     private static final Integer DIGIT_GROUP_SIZE = 3;
     private static final Integer REFERENCE_LENGTH = 6;
