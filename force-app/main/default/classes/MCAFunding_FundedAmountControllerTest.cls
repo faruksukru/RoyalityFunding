@@ -336,7 +336,7 @@ private class MCAFunding_FundedAmountControllerTest {
             LocaleSidKey = 'en_US',
             ProfileId = profileId,
             TimeZoneSidKey = 'America/New_York',
-            Username = 'mca.' + alias + '.' + Test.getRunId() + '@example.com.test'
+            Username = 'mca.' + alias + '.' + String.valueOf(Crypto.getRandomInteger()).replace('-', '') + '@example.com.test'
         );
         insert as system persona;
         return persona;
