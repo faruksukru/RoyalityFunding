@@ -5,7 +5,7 @@
  *
  * Scenarios: populated-slot filtering, save and summary format, prefill from a saved summary,
  * clearing amounts, invalid input (negative, too many decimals, bad slot, missing record),
- * locale-independent formatting, tolerant parsing, and a user without Opportunity access.
+ * locale-independent formatting, tolerant parsing, and restricted/authorized user personas.
  *
  * Bulk does not apply: the only entry point is a record page component acting on one Opportunity.
  *
@@ -217,5 +217,128 @@ private class MCAFunding_FundedAmountControllerTest {
         System.assertEquals(1, parsed.size(), 'Only the well-formed line should parse');
         System.assertEquals(2000.00, parsed.get('Acme: West Capital'), 'The last separator on the line should be used');
         System.assert(MCAFunding_FundedAmountController.parseSummary(null).isEmpty(), 'A blank summary should parse to nothing');
+    }
+
+    /** Exercises load and save as a non-admin Opportunity owner with field access. */
+    @isTest
+    static void nonAdminOpportunityOwner_canLoadAndSaveWhenAuthorized() {
+        Profile standardProfile = [
+            SELECT Id FROM Profile
+            WHERE Name = 'Standard User' AND PermissionsModifyAllData = false
+            WITH SYSTEM_MODE LIMIT 1
+        ];
+        User regularUser = makePersonaUser(standardProfile.Id, 'mcaok', 'Authorized');
+
+        System.runAs(regularUser) {
+            System.assert(
+                Schema.sObjectType.Opportunity.isAccessible() &&
+                Schema.sObjectType.Opportunity.isUpdateable() &&
+                Opportunity.Funded_Amounts_Summary__c.getDescribe().isAccessible() &&
+                Opportunity.Funded_Amounts_Summary__c.getDescribe().isUpdateable(),
+                'The selected non-admin persona requires Opportunity and summary-field read/write access'
+            );
+            Opportunity owned = new Opportunity(
+                Name = 'MCA Authorized Persona',
+                StageName = TEST_STAGE,
+                CloseDate = Date.today().addDays(30),
+                Dragin_Engine__MCA_Name_1__c = MCA_1
+            );
+            insert as system owned;
+            Test.startTest();
+            List<MCAFunding_FundedAmountController.McaRow> beforeSave =
+                MCAFunding_FundedAmountController.getFundedAmounts(owned.Id);
+            List<MCAFunding_FundedAmountController.McaRow> afterSave =
+                MCAFunding_FundedAmountController.saveFundedAmounts(
+                    owned.Id,
+                    new List<MCAFunding_FundedAmountController.FundedAmountInput>{ buildInput(1, 750.25) }
+                );
+            Test.stopTest();
+            System.assertEquals(1, beforeSave.size(), 'Authorized user should load the populated MCA slot');
+            System.assertEquals(750.25, afterSave[0].fundedAmount, 'Authorized user should see the saved amount');
+            System.assertEquals(
+                MCA_1 + ': $750.25',
+                [SELECT Funded_Amounts_Summary__c FROM Opportunity WHERE Id = :owned.Id WITH SYSTEM_MODE LIMIT 1]
+                    .Funded_Amounts_Summary__c,
+                'Authorized user should save the formatted summary'
+            );
+        }
+    }
+
+    /**
+     * The restricted persona has Opportunity object access but no summary-field access.
+     * Grants only the eight MCA name fields, never Funded_Amounts_Summary__c.
+     */
+    @isTest
+    static void userWithoutSummaryFieldAccess_cannotReadAmounts() {
+        Profile minimumAccess = [
+            SELECT Id FROM Profile WHERE Name = :MINIMUM_ACCESS_PROFILE WITH SYSTEM_MODE LIMIT 1
+        ];
+        User restrictedUser = makePersonaUser(minimumAccess.Id, 'mcafls', 'FieldRestricted');
+        PermissionSet access = new PermissionSet(
+            Name = 'MCA_Test_Opportunity_Read',
+            Label = 'MCA Test Opportunity Read'
+        );
+        insert as system access;
+        insert as system new ObjectPermissions(
+            ParentId = access.Id,
+            SObjectType = 'Opportunity',
+            PermissionsRead = true
+        );
+        List<FieldPermissions> grants = new List<FieldPermissions>();
+        for (Schema.SObjectField fieldToken : new List<Schema.SObjectField>{
+            Opportunity.Dragin_Engine__MCA_Name_1__c, Opportunity.Dragin_Engine__MCA_Name_2__c,
+            Opportunity.Dragin_Engine__MCA_Name_3__c, Opportunity.Dragin_Engine__MCA_Name_4__c,
+            Opportunity.Dragin_Engine__MCA_Name_5__c, Opportunity.Dragin_Engine__MCA_Name_6__c,
+            Opportunity.Dragin_Engine__MCA_Name_7__c, Opportunity.Dragin_Engine__MCA_Name_8__c
+        }) {
+            grants.add(new FieldPermissions(
+                ParentId = access.Id,
+                SObjectType = 'Opportunity',
+                Field = fieldToken.getDescribe().getName().startsWith('Opportunity.')
+                    ? fieldToken.getDescribe().getName()
+                    : 'Opportunity.' + fieldToken.getDescribe().getName(),
+                PermissionsRead = true
+            ));
+        }
+        insert as system grants;
+        insert as system new PermissionSetAssignment(
+            AssigneeId = restrictedUser.Id,
+            PermissionSetId = access.Id
+        );
+        Opportunity opp = getOpportunity();
+        String errorMessage;
+        System.runAs(restrictedUser) {
+            System.assert(Schema.sObjectType.Opportunity.isAccessible(), 'Persona needs Opportunity read access');
+            System.assert(
+                !Opportunity.Funded_Amounts_Summary__c.getDescribe().isAccessible(),
+                'Persona must not have access to the summary field'
+            );
+            Test.startTest();
+            try {
+                MCAFunding_FundedAmountController.getFundedAmounts(opp.Id);
+            } catch (AuraHandledException e) {
+                errorMessage = e.getMessage();
+            }
+            Test.stopTest();
+        }
+        System.assertNotEquals(null, errorMessage, 'Restricted field access must prevent summary retrieval');
+        System.assert(!errorMessage.contains('Funded_Amounts_Summary__c'), 'Do not leak field details to users');
+    }
+
+    /** Creates a uniquely named test user for a specified persona profile. */
+    private static User makePersonaUser(Id profileId, String alias, String lastName) {
+        User persona = new User(
+            Alias = alias,
+            Email = 'mca.persona@example.com',
+            EmailEncodingKey = 'UTF-8',
+            LastName = lastName,
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_US',
+            ProfileId = profileId,
+            TimeZoneSidKey = 'America/New_York',
+            Username = 'mca.' + alias + '.' + Test.getRunId() + '@example.com.test'
+        );
+        insert as system persona;
+        return persona;
     }
 }
