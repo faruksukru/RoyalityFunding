@@ -42,9 +42,7 @@ public with sharing class MCAFunding_FundedAmountController {
         @AuraEnabled public Decimal fundedAmount;
         /** Creates one display row with its MCA slot, name, and saved amount. */
         public McaRow(Integer mcaNumber, String mcaName, Decimal fundedAmount) {
-            this.mcaNumber = mcaNumber;
-            this.mcaName = mcaName;
-            this.fundedAmount = fundedAmount;
+            this.mcaNumber = mcaNumber; this.mcaName = mcaName; this.fundedAmount = fundedAmount;
         }
     }
 
@@ -57,35 +55,25 @@ public with sharing class MCAFunding_FundedAmountController {
     /** Returns populated MCA slots and their saved values for an Opportunity record page. */
     @AuraEnabled(cacheable=true)
     public static List<McaRow> getFundedAmounts(Id recordId) {
-        try {
-            return getRows(recordId);
-        } catch (FundedAmountException e) {
-            throw buildException(e.getMessage());
-        } catch (QueryException e) {
-            throw buildReferencedException(MSG_LOAD_FAILED, e);
-        } catch (Exception e) {
-            throw buildReferencedException(MSG_LOAD_FAILED, e);
-        }
+        try { return getRows(recordId); }
+        catch (FundedAmountException e) { throw buildException(e.getMessage()); }
+        catch (QueryException e) { throw buildReferencedException(MSG_LOAD_FAILED, e); }
+        catch (Exception e) { throw buildReferencedException(MSG_LOAD_FAILED, e); }
     }
 
     /** Validates submitted amounts, writes the summary, and returns refreshed MCA rows. */
     @AuraEnabled
     public static List<McaRow> saveFundedAmounts(Id recordId, List<FundedAmountInput> amounts) {
-        try {
-            writeSummary(recordId, amounts);
-            return getRows(recordId);
-        } catch (FundedAmountException e) {
-            throw buildException(e.getMessage());
-        } catch (DmlException e) {
+        try { writeSummary(recordId, amounts); return getRows(recordId); }
+        catch (FundedAmountException e) { throw buildException(e.getMessage()); }
+        catch (DmlException e) {
             if (e.getDmlType(0) == StatusCode.FIELD_CUSTOM_VALIDATION_EXCEPTION) {
                 throw buildException(e.getDmlMessage(0));
             }
             throw buildReferencedException(MSG_SAVE_FAILED, e);
-        } catch (QueryException e) {
-            throw buildReferencedException(MSG_SAVE_FAILED, e);
-        } catch (Exception e) {
-            throw buildReferencedException(MSG_SAVE_FAILED, e);
         }
+        catch (QueryException e) { throw buildReferencedException(MSG_SAVE_FAILED, e); }
+        catch (Exception e) { throw buildReferencedException(MSG_SAVE_FAILED, e); }
     }
 
     /** Queries the Opportunity and builds display rows for nonblank MCA name slots. */
@@ -95,9 +83,7 @@ public with sharing class MCAFunding_FundedAmountController {
         List<McaRow> rows = new List<McaRow>();
         for (Integer i = 0; i < MCA_NAME_FIELDS.size(); i++) {
             String mcaName = (String) opp.get(MCA_NAME_FIELDS[i]);
-            if (String.isBlank(mcaName)) {
-                continue;
-            }
+            if (String.isBlank(mcaName)) { continue; }
             rows.add(new McaRow(i + 1, mcaName.trim(), savedByName.get(mcaName.trim())));
         }
         return rows;
@@ -111,9 +97,7 @@ public with sharing class MCAFunding_FundedAmountController {
         for (Integer i = 0; i < MCA_NAME_FIELDS.size(); i++) {
             String mcaName = (String) opp.get(MCA_NAME_FIELDS[i]);
             Decimal amount = amountsBySlot.get(i + 1);
-            if (String.isBlank(mcaName) || amount == null) {
-                continue;
-            }
+            if (String.isBlank(mcaName) || amount == null) { continue; }
             lines.add(mcaName.trim() + AMOUNT_SEPARATOR + formatAmount(amount));
         }
         Opportunity toUpdate = new Opportunity(Id = opportunityId);
@@ -123,9 +107,7 @@ public with sharing class MCAFunding_FundedAmountController {
 
     /** Loads the Opportunity under the running user's access permissions. */
     private static Opportunity queryOpportunity(Id opportunityId) {
-        if (opportunityId == null) {
-            throw new FundedAmountException(MSG_MISSING_RECORD);
-        }
+        if (opportunityId == null) { throw new FundedAmountException(MSG_MISSING_RECORD); }
         List<Opportunity> found = [
             SELECT Id,
                 Dragin_Engine__MCA_Name_1__c, Dragin_Engine__MCA_Name_2__c,
@@ -135,22 +117,16 @@ public with sharing class MCAFunding_FundedAmountController {
                 Funded_Amounts_Summary__c
             FROM Opportunity WHERE Id = :opportunityId WITH USER_MODE LIMIT 1
         ];
-        if (found.isEmpty()) {
-            throw new FundedAmountException(MSG_NO_ACCESS);
-        }
+        if (found.isEmpty()) { throw new FundedAmountException(MSG_NO_ACCESS); }
         return found[0];
     }
 
     /** Collects non-null amounts by slot after server-side validation. */
     private static Map<Integer, Decimal> collectAmounts(List<FundedAmountInput> amounts) {
         Map<Integer, Decimal> amountsBySlot = new Map<Integer, Decimal>();
-        if (amounts == null) {
-            return amountsBySlot;
-        }
+        if (amounts == null) { return amountsBySlot; }
         for (FundedAmountInput input : amounts) {
-            if (input == null || input.fundedAmount == null) {
-                continue;
-            }
+            if (input == null || input.fundedAmount == null) { continue; }
             validateInput(input);
             amountsBySlot.put(input.mcaNumber, input.fundedAmount);
         }
@@ -162,9 +138,7 @@ public with sharing class MCAFunding_FundedAmountController {
         if (input.mcaNumber == null || input.mcaNumber < 1 || input.mcaNumber > MCA_NAME_FIELDS.size()) {
             throw new FundedAmountException(MSG_INVALID_SLOT);
         }
-        if (input.fundedAmount < 0) {
-            throw new FundedAmountException(MSG_NEGATIVE);
-        }
+        if (input.fundedAmount < 0) { throw new FundedAmountException(MSG_NEGATIVE); }
         // Ignore insignificant trailing zeros when checking the submitted precision.
         if (input.fundedAmount.stripTrailingZeros().scale() > AMOUNT_SCALE) {
             throw new FundedAmountException(MSG_SCALE);
@@ -189,15 +163,11 @@ public with sharing class MCAFunding_FundedAmountController {
     @TestVisible
     private static Map<String, Decimal> parseSummary(String summary) {
         Map<String, Decimal> amountsByName = new Map<String, Decimal>();
-        if (String.isBlank(summary)) {
-            return amountsByName;
-        }
+        if (String.isBlank(summary)) { return amountsByName; }
         for (String line : summary.split(LINE_SPLIT_PATTERN)) {
             // Use the final separator so MCA names containing colons remain intact.
             Integer separatorIndex = line.lastIndexOf(AMOUNT_SEPARATOR);
-            if (separatorIndex <= 0) {
-                continue;
-            }
+            if (separatorIndex <= 0) { continue; }
             String mcaName = line.left(separatorIndex).trim();
             Decimal amount = toDecimalOrNull(line.substring(separatorIndex + AMOUNT_SEPARATOR.length()));
             if (amount != null && !amountsByName.containsKey(mcaName)) {
@@ -210,12 +180,9 @@ public with sharing class MCAFunding_FundedAmountController {
     /** Parses a stored amount, ignoring malformed hand-edited values. */
     private static Decimal toDecimalOrNull(String amountText) {
         String cleaned = amountText.remove(THOUSANDS_SEPARATOR).trim();
-        if (String.isBlank(cleaned)) {
-            return null;
-        }
-        try {
-            return Decimal.valueOf(cleaned);
-        } catch (TypeException e) {
+        if (String.isBlank(cleaned)) { return null; }
+        try { return Decimal.valueOf(cleaned); }
+        catch (TypeException e) {
             System.debug(LoggingLevel.WARN, 'MCAFunding_FundedAmountController skipped an unparseable summary amount');
             return null;
         }
