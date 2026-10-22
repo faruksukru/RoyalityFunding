@@ -78,7 +78,7 @@ export default class McaFundedAmounts extends LightningElement {
             if (Math.floor(index / columns) !== lastLine) {
                 classes.push('slds-border_bottom');
             }
-            if (columns === 2 && index % 2 === 0 && index + 1 < this.rows.length) {
+            if (columns === 2 && index % 2 === 0) {
                 classes.push('slds-border_right');
             }
             return {
