@@ -54,12 +54,12 @@
                                         </template>
                                         <template lwc:else>
                                             <div class={row.amountViewClass}>
-                                                <div class="slds-is-relative slds-col slds-has-flexi-truncate"
+                                                <div class="slds-is-relative slds-size_1-of-1 slds-has-flexi-truncate"
                                                     data-mca-number={row.mcaNumber}
                                                     onmouseenter={handleAmountMouseEnter}
                                                     onmouseleave={handleAmountMouseLeave}>
                                                     <button type="button"
-                                                        class="slds-input slds-size_1-of-1 slds-text-align_left"
+                                                        class="slds-input slds-size_1-of-1 slds-text-align_left" style="display:block;width:100%"
                                                         title={row.editLabel}
                                                         data-mca-number={row.mcaNumber}
                                                         onclick={handleEdit}>
