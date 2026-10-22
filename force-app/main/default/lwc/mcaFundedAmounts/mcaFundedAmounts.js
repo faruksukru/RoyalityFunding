@@ -23,6 +23,7 @@ export default class McaFundedAmounts extends LightningElement {
 
     rows = [];
     savedAmounts = {};
+    editingSlots = [];
     isLoading = true;
     isSaving = false;
     loadError;
@@ -79,7 +80,14 @@ export default class McaFundedAmounts extends LightningElement {
             if (columns === 2 && index % 2 === 0 && index + 1 < this.rows.length) {
                 classes.push('slds-border_right');
             }
-            return { ...row, cellClass: classes.join(' '), amountTooltip: this.formatAmountTooltip(row.value) };
+            return {
+                ...row,
+                cellClass: classes.join(' '),
+                amountTooltip: this.formatAmountTooltip(row.value),
+                hasAmount: row.value !== null && row.value !== undefined && row.value !== '',
+                isEditing: this.editingSlots.includes(row.mcaNumber),
+                editLabel: `Edit funded amount for ${row.mcaName}, MCA slot ${row.mcaNumber}`
+            };
         });
     }
 
@@ -90,11 +98,18 @@ export default class McaFundedAmounts extends LightningElement {
     }
 
     get isCancelDisabled() {
-        return this.isSaving || !this.isDirty;
+        return this.isSaving || (!this.isDirty && this.editingSlots.length === 0);
     }
 
     get isSaveDisabled() {
-        return this.isSaving;
+        return this.isSaving || !this.isDirty;
+    }
+
+    handleEdit(event) {
+        const mcaNumber = Number(event.currentTarget.dataset.mcaNumber);
+        if (!this.editingSlots.includes(mcaNumber)) {
+            this.editingSlots = [...this.editingSlots, mcaNumber];
+        }
     }
 
     handleAmountChange(event) {
@@ -105,6 +120,7 @@ export default class McaFundedAmounts extends LightningElement {
 
     handleCancel() {
         this.rows = this.rows.map((row) => ({ ...row, value: this.savedAmounts[row.mcaNumber] }));
+        this.editingSlots = [];
     }
 
     async handleSave() {
@@ -145,6 +161,7 @@ export default class McaFundedAmounts extends LightningElement {
             };
         });
         this.savedAmounts = saved;
+        this.editingSlots = [];
     }
 
     validateInputs() {
