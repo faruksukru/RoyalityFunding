@@ -79,12 +79,19 @@ public with sharing class MCAFunding_FundedAmountController {
     /** Queries the Opportunity and builds display rows for nonblank MCA name slots. */
     private static List<McaRow> getRows(Id opportunityId) {
         Opportunity opp = queryOpportunity(opportunityId);
-        Map<String, Decimal> savedByName = parseSummary((String) opp.get(SUMMARY_FIELD));
+        Map<String, List<Decimal>> savedByName = parseSummaryOccurrences((String) opp.get(SUMMARY_FIELD));
+        Map<String, Integer> nextOccurrence = new Map<String, Integer>();
         List<McaRow> rows = new List<McaRow>();
         for (Integer i = 0; i < MCA_NAME_FIELDS.size(); i++) {
             String mcaName = (String) opp.get(MCA_NAME_FIELDS[i]);
             if (String.isBlank(mcaName)) { continue; }
-            rows.add(new McaRow(i + 1, mcaName.trim(), savedByName.get(mcaName.trim())));
+            String name = mcaName.trim();
+            Integer occurrence = nextOccurrence.containsKey(name) ? nextOccurrence.get(name) : 0;
+            List<Decimal> savedAmounts = savedByName.get(name);
+            Decimal amount = savedAmounts != null && occurrence < savedAmounts.size()
+                ? savedAmounts[occurrence] : null;
+            rows.add(new McaRow(i + 1, name, amount));
+            nextOccurrence.put(name, occurrence + 1);
         }
         return rows;
     }
@@ -173,6 +180,28 @@ public with sharing class MCAFunding_FundedAmountController {
             if (amount != null && !amountsByName.containsKey(mcaName)) {
                 amountsByName.put(mcaName, amount);
             }
+        }
+        return amountsByName;
+    }
+
+    /**
+     * Keeps each occurrence of a repeated MCA name in the stored summary's line order.
+     * Slot order must remain stable; the text format does not carry slot identifiers.
+     */
+    private static Map<String, List<Decimal>> parseSummaryOccurrences(String summary) {
+        Map<String, List<Decimal>> amountsByName = new Map<String, List<Decimal>>();
+        if (String.isBlank(summary)) { return amountsByName; }
+        for (String line : summary.split(LINE_SPLIT_PATTERN)) {
+            // Use the last separator because an MCA name itself can contain a colon.
+            Integer separatorIndex = line.lastIndexOf(AMOUNT_SEPARATOR);
+            if (separatorIndex <= 0) { continue; }
+            String name = line.left(separatorIndex).trim();
+            Decimal amount = toDecimalOrNull(line.substring(separatorIndex + AMOUNT_SEPARATOR.length()));
+            if (amount == null) { continue; }
+            if (!amountsByName.containsKey(name)) {
+                amountsByName.put(name, new List<Decimal>());
+            }
+            amountsByName.get(name).add(amount);
         }
         return amountsByName;
     }
