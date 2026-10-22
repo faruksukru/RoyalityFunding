@@ -53,7 +53,7 @@
                                             ></lightning-input>
                                         </template>
                                         <template lwc:else>
-                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                            <div class={row.amountViewClass}>
                                                 <div class="slds-is-relative slds-col slds-has-flexi-truncate"
                                                     data-mca-number={row.mcaNumber}
                                                     onmouseenter={handleAmountMouseEnter}
