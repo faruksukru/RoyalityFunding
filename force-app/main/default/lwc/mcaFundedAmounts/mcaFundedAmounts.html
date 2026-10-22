@@ -10,6 +10,7 @@
             <template lwc:if={isEmpty}>
                 <div class="slds-text-align_center slds-p-vertical_small">
                     <p class="slds-text-heading_small">No MCAs on this record yet</p>
+                    <p class="slds-text-body_small">Add MCA names in the Obligations section to enter funded amounts.</p>
                 </div>
             </template>
             <template lwc:if={hasRows}>
@@ -36,19 +37,39 @@
                                 <div class="slds-grid slds-grid_vertical-align-center">
                                     <div class="slds-size_2-of-5 slds-p-right_x-small slds-hyphenate">{row.mcaName}</div>
                                     <div class="slds-size_3-of-5" title={row.amountTooltip}>
-                                        <lightning-input
-                                            type="number"
-                                            formatter="currency"
-                                            step="0.01"
-                                            min="0"
-                                            label={row.inputLabel}
-                                            variant="label-hidden"
-                                            value={row.value}
-                                            data-mca-number={row.mcaNumber}
-                                            message-when-range-underflow="Amount cannot be negative."
-                                            message-when-step-mismatch="Use up to 2 decimal places."
-                                            onchange={handleAmountChange}
-                                        ></lightning-input>
+                                        <template lwc:if={row.isEditing}>
+                                            <lightning-input
+                                                type="number"
+                                                formatter="currency"
+                                                step="0.01"
+                                                min="0"
+                                                label={row.inputLabel}
+                                                variant="label-hidden"
+                                                value={row.value}
+                                                data-mca-number={row.mcaNumber}
+                                                message-when-range-underflow="Amount cannot be negative."
+                                                message-when-step-mismatch="Use up to 2 decimal places."
+                                                onchange={handleAmountChange}
+                                            ></lightning-input>
+                                        </template>
+                                        <template lwc:else>
+                                            <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
+                                                <span class="slds-truncate" title={row.amountTooltip}>
+                                                    <template lwc:if={row.hasAmount}>
+                                                        <lightning-formatted-number value={row.value}
+                                                            format-style="currency" currency-code="USD"
+                                                            minimum-fraction-digits="2" maximum-fraction-digits="2">
+                                                        </lightning-formatted-number>
+                                                    </template>
+                                                    <template lwc:else>—</template>
+                                                </span>
+                                                <lightning-button-icon class="slds-m-left_xx-small"
+                                                    icon-name="utility:edit" variant="bare" size="small"
+                                                    alternative-text={row.editLabel} title={row.editLabel}
+                                                    data-mca-number={row.mcaNumber} onclick={handleEdit}>
+                                                </lightning-button-icon>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
                             </lightning-layout-item>
