@@ -62,10 +62,6 @@ export default class McaFundedAmounts extends LightningElement {
         return this.rows.length > 1;
     }
 
-    get gridClass() {
-        return this.isTwoColumn ? 'mca-grid mca-grid_two' : 'mca-grid';
-    }
-
     get itemSize() {
         return this.isTwoColumn ? HALF_WIDTH : FULL_WIDTH;
     }
@@ -78,7 +74,7 @@ export default class McaFundedAmounts extends LightningElement {
         const columns = this.isTwoColumn ? 2 : 1;
         const lastLine = Math.floor((this.rows.length - 1) / columns);
         return this.rows.map((row, index) => {
-            const classes = [CELL_BASE_CLASS];
+            const classes = [CELL_BASE_CLASS, columns === 2 ? 'slds-size_1-of-2' : 'slds-size_1-of-1'];
             if (Math.floor(index / columns) !== lastLine) {
                 classes.push('slds-border_bottom');
             }
