@@ -62,6 +62,10 @@ export default class McaFundedAmounts extends LightningElement {
         return this.rows.length > 1;
     }
 
+    get gridClass() {
+        return this.isTwoColumn ? 'mca-grid mca-grid_two' : 'mca-grid';
+    }
+
     get itemSize() {
         return this.isTwoColumn ? HALF_WIDTH : FULL_WIDTH;
     }
