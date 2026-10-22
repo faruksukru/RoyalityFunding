@@ -36,7 +36,7 @@
                             <div key={row.key} class={row.cellClass}>
                                 <div class="slds-grid slds-grid_vertical-align-center">
                                     <div class="slds-size_2-of-5 slds-p-right_x-small slds-hyphenate">{row.mcaName}</div>
-                                    <div class="slds-size_3-of-5" title={row.amountTooltip}>
+                                    <div class="slds-size_3-of-5 slds-has-flexi-truncate" title={row.amountTooltip}>
                                         <template lwc:if={row.isEditing}>
                                             <lightning-input
                                                 type="number"
@@ -53,13 +53,13 @@
                                             ></lightning-input>
                                         </template>
                                         <template lwc:else>
-                                            <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
-                                                <div class="slds-is-relative"
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <div class="slds-is-relative slds-col slds-has-flexi-truncate"
                                                     data-mca-number={row.mcaNumber}
                                                     onmouseenter={handleAmountMouseEnter}
                                                     onmouseleave={handleAmountMouseLeave}>
                                                     <template lwc:if={row.hasAmount}>
-                                                        <span class="slds-truncate" style="display:block" title={row.amountTooltip}>
+                                                        <span class="slds-truncate slds-size_1-of-1" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title={row.amountTooltip}>
                                                             <lightning-formatted-number value={row.value}
                                                                 format-style="currency" currency-code="USD"
                                                                 minimum-fraction-digits="2" maximum-fraction-digits="2">
@@ -74,7 +74,7 @@
                                                         </template>
                                                     </template>
                                                 </div>
-                                                <lightning-button-icon class="slds-m-left_xx-small"
+                                                <lightning-button-icon class="slds-m-left_xx-small slds-shrink-none"
                                                     icon-name="utility:edit" variant="bare" size="small"
                                                     alternative-text={row.editLabel} title={row.editLabel}
                                                     data-mca-number={row.mcaNumber} onclick={handleEdit}>
