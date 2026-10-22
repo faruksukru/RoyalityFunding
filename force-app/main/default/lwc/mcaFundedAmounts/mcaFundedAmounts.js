@@ -24,6 +24,7 @@ export default class McaFundedAmounts extends LightningElement {
     rows = [];
     savedAmounts = {};
     editingSlots = [];
+    hoveredAmountSlot = null;
     isLoading = true;
     isSaving = false;
     loadError;
@@ -85,6 +86,7 @@ export default class McaFundedAmounts extends LightningElement {
                 cellClass: classes.join(' '),
                 amountTooltip: this.formatAmountTooltip(row.value),
                 hasAmount: row.value !== null && row.value !== undefined && row.value !== '',
+                showAmountTooltip: this.hoveredAmountSlot === row.mcaNumber,
                 isEditing: this.editingSlots.includes(row.mcaNumber),
                 editLabel: `Edit funded amount for ${row.mcaName}, MCA slot ${row.mcaNumber}`
             };
@@ -103,6 +105,14 @@ export default class McaFundedAmounts extends LightningElement {
 
     get isSaveDisabled() {
         return this.isSaving || !this.isDirty;
+    }
+
+    handleAmountMouseEnter(event) {
+        this.hoveredAmountSlot = Number(event.currentTarget.dataset.mcaNumber);
+    }
+
+    handleAmountMouseLeave() {
+        this.hoveredAmountSlot = null;
     }
 
     handleEdit(event) {
@@ -162,6 +172,7 @@ export default class McaFundedAmounts extends LightningElement {
         });
         this.savedAmounts = saved;
         this.editingSlots = [];
+        this.hoveredAmountSlot = null;
     }
 
     validateInputs() {
