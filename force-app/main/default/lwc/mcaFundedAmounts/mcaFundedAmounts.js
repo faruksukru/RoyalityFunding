@@ -84,6 +84,9 @@ export default class McaFundedAmounts extends LightningElement {
             return {
                 ...row,
                 cellClass: classes.join(' '),
+                amountViewClass: this.rows.length === 1
+                    ? 'slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-size_1-of-1'
+                    : 'slds-grid slds-grid_vertical-align-center',
                 amountTooltip: this.formatAmountTooltip(row.value),
                 hasAmount: row.value !== null && row.value !== undefined && row.value !== '',
                 showAmountTooltip: this.hoveredAmountSlot === row.mcaNumber,
