@@ -54,15 +54,24 @@
                                         </template>
                                         <template lwc:else>
                                             <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
-                                                <span class="slds-truncate" title={row.amountTooltip}>
+                                                <div class="slds-is-relative slds-truncate"
+                                                    data-mca-number={row.mcaNumber}
+                                                    onmouseenter={handleAmountMouseEnter}
+                                                    onmouseleave={handleAmountMouseLeave}>
                                                     <template lwc:if={row.hasAmount}>
                                                         <lightning-formatted-number value={row.value}
                                                             format-style="currency" currency-code="USD"
                                                             minimum-fraction-digits="2" maximum-fraction-digits="2">
                                                         </lightning-formatted-number>
+                                                        <template lwc:if={row.showAmountTooltip}>
+                                                            <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left"
+                                                                role="tooltip"
+                                                                style="position:absolute;bottom:100%;left:0;z-index:10;white-space:nowrap;overflow:visible">
+                                                                <div class="slds-popover__body">{row.amountTooltip}</div>
+                                                            </div>
+                                                        </template>
                                                     </template>
-                                                    <template lwc:else>—</template>
-                                                </span>
+                                                </div>
                                                 <lightning-button-icon class="slds-m-left_xx-small"
                                                     icon-name="utility:edit" variant="bare" size="small"
                                                     alternative-text={row.editLabel} title={row.editLabel}
