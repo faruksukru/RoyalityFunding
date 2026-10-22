@@ -353,4 +353,53 @@ private class MCAFunding_FundedAmountControllerTest {
         insert as system persona;
         return persona;
     }
+
+    /** Duplicate names must retain distinct values across load and a subsequent save. */
+    @isTest
+    static void duplicateMcaNames_preserveAmountsByOccurrence() {
+        Opportunity opp = getOpportunity();
+        opp.Dragin_Engine__MCA_Name_2__c = MCA_1;
+        update as system opp;
+
+        List<MCAFunding_FundedAmountController.FundedAmountInput> initial =
+            new List<MCAFunding_FundedAmountController.FundedAmountInput>{
+                buildInput(1, 10000), buildInput(2, 25000), buildInput(4, 15000)
+            };
+        Test.startTest();
+        MCAFunding_FundedAmountController.saveFundedAmounts(opp.Id, initial);
+        List<MCAFunding_FundedAmountController.McaRow> loaded =
+            MCAFunding_FundedAmountController.getFundedAmounts(opp.Id);
+        System.assertEquals(10000, loaded[0].fundedAmount, 'First duplicate keeps first amount');
+        System.assertEquals(25000, loaded[1].fundedAmount, 'Second duplicate keeps second amount');
+        System.assertEquals(15000, loaded[2].fundedAmount, 'Other MCA remains unchanged');
+
+        List<MCAFunding_FundedAmountController.FundedAmountInput> resave =
+            new List<MCAFunding_FundedAmountController.FundedAmountInput>{
+                buildInput(1, loaded[0].fundedAmount),
+                buildInput(2, loaded[1].fundedAmount),
+                buildInput(4, 17500)
+            };
+        MCAFunding_FundedAmountController.saveFundedAmounts(opp.Id, resave);
+        Test.stopTest();
+        System.assertEquals(
+            MCA_1 + ': $10,000.00\n' + MCA_1 + ': $25,000.00\n' + MCA_4 + ': $17,500.00',
+            getOpportunity().Funded_Amounts_Summary__c,
+            'Saving an unrelated edit must not overwrite the second duplicate'
+        );
+    }
+
+    /** A single matching summary line cannot populate every repeated-name slot. */
+    @isTest
+    static void duplicateMcaNames_missingSecondOccurrenceStaysBlank() {
+        Opportunity opp = getOpportunity();
+        opp.Dragin_Engine__MCA_Name_2__c = MCA_1;
+        opp.Funded_Amounts_Summary__c = MCA_1 + ': $250.00';
+        update as system opp;
+        Test.startTest();
+        List<MCAFunding_FundedAmountController.McaRow> rows =
+            MCAFunding_FundedAmountController.getFundedAmounts(opp.Id);
+        Test.stopTest();
+        System.assertEquals(250, rows[0].fundedAmount, 'Existing line maps to first occurrence');
+        System.assertEquals(null, rows[1].fundedAmount, 'Missing second entry must stay blank');
+    }
 }
