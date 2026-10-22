@@ -54,15 +54,17 @@
                                         </template>
                                         <template lwc:else>
                                             <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
-                                                <div class="slds-is-relative slds-truncate"
+                                                <div class="slds-is-relative"
                                                     data-mca-number={row.mcaNumber}
                                                     onmouseenter={handleAmountMouseEnter}
                                                     onmouseleave={handleAmountMouseLeave}>
                                                     <template lwc:if={row.hasAmount}>
-                                                        <lightning-formatted-number value={row.value}
-                                                            format-style="currency" currency-code="USD"
-                                                            minimum-fraction-digits="2" maximum-fraction-digits="2">
-                                                        </lightning-formatted-number>
+                                                        <span class="slds-truncate" style="display:block" title={row.amountTooltip}>
+                                                            <lightning-formatted-number value={row.value}
+                                                                format-style="currency" currency-code="USD"
+                                                                minimum-fraction-digits="2" maximum-fraction-digits="2">
+                                                            </lightning-formatted-number>
+                                                        </span>
                                                         <template lwc:if={row.showAmountTooltip}>
                                                             <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left"
                                                                 role="tooltip"
