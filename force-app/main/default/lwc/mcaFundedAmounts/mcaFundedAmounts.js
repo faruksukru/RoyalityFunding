@@ -79,7 +79,7 @@ export default class McaFundedAmounts extends LightningElement {
             if (columns === 2 && index % 2 === 0 && index + 1 < this.rows.length) {
                 classes.push('slds-border_right');
             }
-            return { ...row, cellClass: classes.join(' ') };
+            return { ...row, cellClass: classes.join(' '), amountTooltip: this.formatAmountTooltip(row.value) };
         });
     }
 
@@ -150,6 +150,17 @@ export default class McaFundedAmounts extends LightningElement {
     validateInputs() {
         const inputs = [...this.template.querySelectorAll('lightning-input')];
         return inputs.reduce((allValid, input) => input.reportValidity() && allValid, true);
+    }
+
+    // Full formatted amount is available on hover without widening the two-column card.
+    formatAmountTooltip(value) {
+        if (value === null || value === undefined || value === '') {
+            return 'No funded amount entered';
+        }
+        const amount = Number(value);
+        return Number.isFinite(amount)
+            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+            : String(value);
     }
 
     toAmount(value) {
