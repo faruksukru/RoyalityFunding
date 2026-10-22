@@ -17,15 +17,15 @@
                     <lightning-layout class="slds-theme_shade slds-border_bottom">
                         <lightning-layout-item size={itemSize} class={leftHeaderClass}>
                             <div class="slds-grid slds-text-title_bold">
-                                <div class="slds-size_3-of-5">MCA Name</div>
-                                <div class="slds-size_2-of-5">Funded Amount ($)</div>
+                                <div class="slds-size_2-of-5">MCA Name</div>
+                                <div class="slds-size_3-of-5">Funded Amount ($)</div>
                             </div>
                         </lightning-layout-item>
                         <template lwc:if={isTwoColumn}>
                             <lightning-layout-item size={itemSize} class="slds-p-horizontal_x-small slds-p-vertical_xxx-small">
                                 <div class="slds-grid slds-text-title_bold">
-                                    <div class="slds-size_3-of-5">MCA Name</div>
-                                    <div class="slds-size_2-of-5">Funded Amount ($)</div>
+                                    <div class="slds-size_2-of-5">MCA Name</div>
+                                    <div class="slds-size_3-of-5">Funded Amount ($)</div>
                                 </div>
                             </lightning-layout-item>
                         </template>
@@ -34,8 +34,8 @@
                         <template for:each={displayRows} for:item="row">
                             <lightning-layout-item key={row.key} size={itemSize} class={row.cellClass}>
                                 <div class="slds-grid slds-grid_vertical-align-center">
-                                    <div class="slds-size_3-of-5 slds-p-right_x-small slds-hyphenate">{row.mcaName}</div>
-                                    <div class="slds-size_2-of-5">
+                                    <div class="slds-size_2-of-5 slds-p-right_x-small slds-hyphenate">{row.mcaName}</div>
+                                    <div class="slds-size_3-of-5" title={row.amountTooltip}>
                                         <lightning-input
                                             type="number"
                                             formatter="currency"
